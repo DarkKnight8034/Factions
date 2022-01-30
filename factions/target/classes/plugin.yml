@@ -1,0 +1,9 @@
+name: Factions
+main: io.github.darkknight8034.factions.Main
+author: DarkKnight8034
+version: 1.0
+api-version: 1.18
+description: Plugin for Factions server
+commands:
+  faction:
+    description: Handles faction based commands
