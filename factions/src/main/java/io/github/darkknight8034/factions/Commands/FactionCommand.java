@@ -1,6 +1,8 @@
 package io.github.darkknight8034.factions.Commands;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.Effect;
 // Commands
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -25,20 +27,17 @@ import io.github.darkknight8034.factions.Commands.FactionTabComp;
 public class FactionCommand implements CommandExecutor
 {
 
-    private Main plugin;
-
-    public FactionCommand(Main plugin)
+    public FactionCommand()
     {
 
-        this.plugin = plugin;
         // Sets up command execution and tab completion
-        plugin.getCommand("faction").setExecutor(this);
-        plugin.getCommand("faction").setTabCompleter(new FactionTabComp());
+        Main.plugin.getCommand("faction").setExecutor(this);
+        Main.plugin.getCommand("faction").setTabCompleter(new FactionTabComp());
 
         // Command aliases
         List<String> aliases = new ArrayList<String>();
         aliases.add("f");
-        plugin.getCommand("faction").setAliases(aliases);
+        Main.plugin.getCommand("faction").setAliases(aliases);
 
     }
 
@@ -62,6 +61,24 @@ public class FactionCommand implements CommandExecutor
                 return listFactions(sender, cmd, label, args);
 
             }
+            else if (args[0].equalsIgnoreCase("promote"))
+            {
+
+                return promote(sender, cmd, label, args);
+
+            }
+            else if (args[0].equalsIgnoreCase("demote"))
+            {
+
+                return demote(sender, cmd, label, args);
+
+            }
+            else if (args[0].equalsIgnoreCase("claim"))
+            {
+
+                return claim(sender, cmd, label, args);
+
+            }
 
         }
 
@@ -69,13 +86,14 @@ public class FactionCommand implements CommandExecutor
 
     }
 
+    // Lists factions, green for if the player is in them
     private boolean listFactions(CommandSender sender, Command cmd, String label, String[] args)
     {
 
         Player player = (Player) sender;
 
         // Creates section in config
-        ConfigurationSection root = plugin.dataFile.getConfigurationSection("factions");
+        ConfigurationSection root = Main.plugin.dataFile.getConfigurationSection("factions");
 
         // Gets keys in section, aka. the faction names
         Set<String> factions = root.getKeys(false);
@@ -84,7 +102,7 @@ public class FactionCommand implements CommandExecutor
         for (String f : factions)
         {
 
-            if (plugin.dataFile.getList("factions." + f + ".members").contains(player.getName())) 
+            if (Main.plugin.dataFile.getList("factions." + f + ".members").contains(player.getName())) 
             {
 
                 display += ChatColor.GREEN + f;
@@ -112,11 +130,12 @@ public class FactionCommand implements CommandExecutor
     private boolean createFaction(CommandSender sender, Command cmd, String label, String[] args)
     {
 
-        plugin.getLogger().info("Faction Create!");
+        Main.plugin.getLogger().info("Faction Create!");
 
         Player player = (Player) sender;
-        // Costs 30 levels to create a faction
-        if (player.getLevel() >= 30)
+
+        // Costs levels to create a faction (set in config)
+        if (player.getLevel() >= Main.plugin.configFile.getInt("factions.createCost"))
         {
 
             // Error handling for no faction name
@@ -127,67 +146,73 @@ public class FactionCommand implements CommandExecutor
                 String name = args[1];
 
                 // Removes levels from player
-                player.setLevel(player.getLevel() - 30);
+                player.setLevel(player.getLevel() - Main.plugin.configFile.getInt("factions.createCost"));
 
                 // Default values
+                List<String> all = new ArrayList<String>();
+                all.add(player.getName());
+
                 List<String> members = new ArrayList<String>();
-                members.add(player.getName());
 
                 List<String> coleaders = new ArrayList<String>();
 
-                // Setting values in persistent data
-                File f = new File(plugin.getDataFolder() + File.separator + "data.yml");
-                plugin.dataFile = YamlConfiguration.loadConfiguration(f);
+                List<Chunk> territory = new ArrayList<Chunk>();
 
-                plugin.dataFile.set("factions." + name + ".members", members);
-                plugin.dataFile.set("factions." + name + ".coleaders", coleaders);
-                plugin.dataFile.set("factions." + name + ".leader", player.getName());
+                // Setting values in persistent data
+                File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
+                Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
+
+                Main.plugin.dataFile.set("factions." + name + ".all", all);
+                Main.plugin.dataFile.set("factions." + name + ".members", members);
+                Main.plugin.dataFile.set("factions." + name + ".coleaders", coleaders);
+                Main.plugin.dataFile.set("factions." + name + ".leader", player.getName());
+                Main.plugin.dataFile.set("factions." + name + ".territory", territory);
 
                 // In game feedback
                 player.sendMessage(ChatColor.GREEN + "You have created the faction: " + name + "!");
 
                 // Removes player from any previous factions
-                String previous = plugin.dataFile.getString("players." + player.getName());
+                String previous = Main.plugin.dataFile.getString("players." + player.getName());
                 if (previous != null)
                 {
 
                     // Removes player from member list
-                    List<?> Members = plugin.dataFile.getList("factions." + previous + ".members");
+                    List<?> Members = Main.plugin.dataFile.getList("factions." + previous + ".members");
                     Members.remove(player.getName());
 
-                    plugin.dataFile.set("factions." + previous + ".members", Members);
+                    Main.plugin.dataFile.set("factions." + previous + ".members", Members);
 
                     // Determines new faction leader if they owned the previous faction
-                    if (plugin.dataFile.getString("factions." + previous + ".leader").equalsIgnoreCase(player.getName()))
+                    if (Main.plugin.dataFile.getString("factions." + previous + ".leader").equalsIgnoreCase(player.getName()))
                     {
 
                         // Sets first coleader to leader
-                        List<?> Coleaders = plugin.dataFile.getList("factions." + previous + ".coleaders");
+                        List<?> Coleaders = Main.plugin.dataFile.getList("factions." + previous + ".coleaders");
                         if (Coleaders.size() >= 1)
                         {
 
                             // Sets leader and removes leader from list of coleaders
-                            plugin.dataFile.set("factions." + previous + ".leader", Coleaders.get(0));
+                            Main.plugin.dataFile.set("factions." + previous + ".leader", Coleaders.get(0));
 
                             Coleaders.remove(Coleaders.get(0));
-                            plugin.dataFile.set("factions." + previous + ".coleaders", Coleaders);
+                            Main.plugin.dataFile.set("factions." + previous + ".coleaders", Coleaders);
 
                         }
                         else if (Members.size() >= 1)
                         {
 
                             // Sets leader and removes leader from list of members
-                            plugin.dataFile.set("factions." + previous + ".leader", Members.get(0));
+                            Main.plugin.dataFile.set("factions." + previous + ".leader", Members.get(0));
 
                             Members.remove(Members.get(0));
-                            plugin.dataFile.set("factions." + previous + ".members", Members);
+                            Main.plugin.dataFile.set("factions." + previous + ".members", Members);
 
                         }
                         else 
                         {
 
                             // Disbands faction if there is no one left
-                            plugin.dataFile.set("factions." + previous, null);
+                            Main.plugin.dataFile.set("factions." + previous, null);
 
                             player.sendMessage(ChatColor.RED + "You disbanded the faction: " + previous);
 
@@ -198,10 +223,10 @@ public class FactionCommand implements CommandExecutor
                 }
 
                 // Updates players current faction
-                plugin.dataFile.set("players." + player.getName(), name);
+                Main.plugin.dataFile.set("players." + player.getName(), name);
 
                 // Saves file
-                try { plugin.dataFile.save(f); }
+                try { Main.plugin.dataFile.save(f); }
                 catch (IOException e) {}
 
                 return true;
@@ -223,6 +248,262 @@ public class FactionCommand implements CommandExecutor
             return false;
 
         }
+
+    }
+
+    // Handles promoting members
+    private boolean promote(CommandSender sender, Command cmd, String label, String[] args)
+    {
+
+        Player player = (Player) sender;
+
+        // Gets player to be promoted
+        Player target = Main.plugin.getServer().getPlayer(args[1]);
+
+        // Gets factions of involved players
+        String pFaction = Main.plugin.dataFile.getString("players." + player.getName());
+        String tFaction = Main.plugin.dataFile.getString("players." + target.getName());
+
+        // Have to be in the same faction
+        if (!pFaction.equalsIgnoreCase(tFaction))
+        {
+
+            return false;
+
+        }
+
+        boolean change = changeRank(player, target, 1);
+        if (change)
+        {
+
+            player.sendMessage(ChatColor.GREEN + "Promoted " + target.getName() + "!");            
+
+        }
+
+        return true;
+
+    }
+
+    // Handles demoting members
+    private boolean demote(CommandSender sender, Command cmd, String label, String[] args)
+    {
+
+        Player player = (Player) sender;
+
+        // Gets player to be promoted
+        Player target = Main.plugin.getServer().getPlayer(args[1]);
+
+        // Gets factions of involved players
+        String pFaction = Main.plugin.dataFile.getString("players." + player.getName());
+        String tFaction = Main.plugin.dataFile.getString("players." + target.getName());
+
+        // Have to be in the same faction
+        if (!pFaction.equalsIgnoreCase(tFaction))
+        {
+
+            return false;
+
+        }
+
+        boolean change = changeRank(player, target, -1);
+        if (change)
+        {
+
+            player.sendMessage(ChatColor.GREEN + "Demoted " + target.getName() + "!");            
+
+        }
+
+        return true;
+
+    }
+
+    // Handles changing ranks
+    private boolean changeRank(Player player, Player target, int change)
+    {
+
+        int pLevel = 1;
+        int tLevel = 1;
+
+        String faction = Main.plugin.dataFile.getString("players." + player.getName());
+
+        // Gets level of player
+        if (Main.plugin.dataFile.getString("factions." + faction + ".leader").equalsIgnoreCase(player.getName()))
+        {
+
+            pLevel = 3; // Player is leader
+
+        }
+        else if (Main.plugin.dataFile.getList("factions." + faction + ".coleaders").contains(player.getName()))
+        {
+
+            pLevel = 2; // Player is coleader
+
+        }
+
+        // Memebers don't have those perms
+        if (pLevel == 1)
+        {
+
+            player.sendMessage(ChatColor.RED + "You don't have permission to do this!");
+            return false;
+
+        }
+
+        // Gets level of target
+        if (Main.plugin.dataFile.getString("factions." + faction + ".leader").equalsIgnoreCase(target.getName()))
+        {
+
+            tLevel = 3; // Target is leader
+
+        }
+        else if (Main.plugin.dataFile.getList("factions." + faction + ".coleaders").contains(target.getName()))
+        {
+
+            tLevel = 2; // Target is coleader
+
+        }
+
+        int newL = 0;
+        if (pLevel > tLevel)
+        {
+
+            newL = tLevel + change;
+
+        }
+        else
+        {
+
+            // Target is higher rank
+            player.sendMessage(ChatColor.RED + "Target is higher rank, you don't have permission to do this!");
+            return false;
+
+        }
+
+        // Editing file
+        File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
+        Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
+
+        // Removes player from their current role
+        switch(tLevel)
+        {
+
+            // Members
+            case 1:
+                List<String> members = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".members");
+                members.remove(target.getName());
+                Main.plugin.dataFile.set("factions." + faction + ".members", members);
+                break;
+
+            // Coleaders
+            case 2:
+                List<String> coleaders = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".coleaders");
+                coleaders.remove(target.getName());
+                Main.plugin.dataFile.set("factions." + faction + ".coleaders", coleaders);
+
+        }
+
+        switch(newL)
+        {
+
+            // Player being demoted from member
+            case 0:
+                player.sendMessage(ChatColor.RED + "You can't demote a member.");
+                break;
+
+
+            // Change to coleader
+            case 2:
+                List<String> coleaders = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".coleaders");
+                coleaders.add(target.getName());
+                Main.plugin.dataFile.set("factions." + faction + ".coleaders", coleaders);
+                break;
+
+            // Change to leader
+            case 3:
+                Main.plugin.dataFile.set("factions." + faction + ".leader", target.getName());
+                
+                // Promoting to leader sets leader to be a coleader
+                coleaders = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".coleaders");
+                coleaders.add(player.getName());
+                Main.plugin.dataFile.set("factions." + faction + ".coleaders", coleaders);
+
+        }
+
+        // Saves file
+        try { Main.plugin.dataFile.save(f); }
+        catch (IOException e) {}
+
+        return true;
+
+    }   
+
+    // Handles claiming territory
+    private boolean claim(CommandSender sender, Command cmd, String label, String[] args)
+    {
+
+        Player player = (Player) sender;
+        String faction = Main.plugin.dataFile.getString("players." + player.getName());
+
+        // Cannot claim land when not in a faction
+        if (faction == null)
+        {
+
+            player.sendMessage(ChatColor.RED + "You must be in a faction first!");
+            return false;
+
+        }
+        
+        // Gets chunk
+        Chunk current = player.getLocation().getChunk();
+        // Gets chunks claimed by faction
+        List<String> chunks = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".territory");
+
+        // Already claimed
+        String serialized = current.getX() + "," + current.getZ();
+        if (chunks.contains(serialized))
+        {
+
+            player.sendMessage("Chunk already claimed!");
+            return false;
+
+        }
+
+        // Max land claimed
+        int max = Main.plugin.configFile.getInt("factions.maxTerritory");
+        Main.plugin.getLogger().info("" + max);
+        if (chunks.size() >= max && max != 0)
+        {
+
+            player.sendMessage(ChatColor.RED + "Max territory reached!");
+            return false;
+
+        }
+
+        // Player has enough xp
+        if (player.getLevel() >= Main.plugin.configFile.getInt("factions.chunkCost"))
+        {
+
+            // Removes xp
+            player.setLevel(player.getLevel() - Main.plugin.configFile.getInt("factions.chunkCost"));
+            chunks.add(serialized);
+
+            // Editing file
+            File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
+            Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
+
+            // Writes new chunk
+            Main.plugin.dataFile.set("factions." + faction + ".territory", chunks);
+
+            // Feedback
+            player.sendMessage(ChatColor.GREEN + "Chunk claimed!");
+
+            // Saves file
+            try { Main.plugin.dataFile.save(f); }
+            catch (IOException e) {}
+
+        }
+
+        return true;
 
     }
 

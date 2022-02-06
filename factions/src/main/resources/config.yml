@@ -1,0 +1,8 @@
+factions:
+  # Levels
+  createCost: 30 
+  chunkCost: 10
+  # Defaults to unlimited
+  maxTerritory: 
+  # Players can declare war
+  war: true

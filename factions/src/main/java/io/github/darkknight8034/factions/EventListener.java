@@ -25,14 +25,11 @@ import io.github.darkknight8034.factions.Main;
 public class EventListener implements Listener
 {
 
-    private Main plugin;
-
-    public EventListener (Main plugin)
+    public EventListener()
     {
 
         // Registers listener
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        this.plugin = plugin;
+        Main.plugin.getServer().getPluginManager().registerEvents(this, Main.plugin);
 
     }
 
@@ -42,7 +39,7 @@ public class EventListener implements Listener
     public void blockBreakEvent(BlockBreakEvent event)
     {
 
-        plugin.getLogger().info(event.getPlayer().getDisplayName() + " is breaking " + event.getBlock().getType().toString());
+        Main.plugin.getLogger().info(event.getPlayer().getDisplayName() + " is breaking " + event.getBlock().getType().toString());
 
         // Gets information about the event
         Player player = event.getPlayer();
@@ -50,12 +47,12 @@ public class EventListener implements Listener
         Chunk chunk = player.getWorld().getChunkAt(player.getLocation());
 
         // Gets faction the player is in
-        Set<String> factions = plugin.dataFile.getConfigurationSection("factions").getKeys(false);
+        Set<String> factions = Main.plugin.dataFile.getConfigurationSection("factions").getKeys(false);
         String faction = "";
         for (String f : factions)
         {
 
-            Set<String> members = plugin.dataFile.getConfigurationSection("factions." + f).getKeys(false);
+            Set<String> members = Main.plugin.dataFile.getConfigurationSection("factions." + f).getKeys(false);
             if (members.contains(uuid))
             {
 
@@ -69,7 +66,7 @@ public class EventListener implements Listener
         // Makes sure player is not a free agent
         if (faction != "") {
             // Gets chunks in player's faction's territory
-            ArrayList<Chunk> chunks = (ArrayList<Chunk>) plugin.dataFile.getList("factions." + faction + ".territories");
+            ArrayList<Chunk> chunks = (ArrayList<Chunk>) Main.plugin.dataFile.getList("factions." + faction + ".territories");
             if (!chunks.contains(chunk))
             {
 
@@ -77,7 +74,7 @@ public class EventListener implements Listener
                 event.setCancelled(true);
 
             }
-            plugin.getLogger().info(faction);
+            Main.plugin.getLogger().info(faction);
         }
 
     }

@@ -16,6 +16,8 @@ import io.github.darkknight8034.factions.Commands.FactionCommand;
 public class Main extends JavaPlugin
 {
     
+    public static Main plugin;
+
     // Commands
     public FactionCommand fm;
 
@@ -24,16 +26,19 @@ public class Main extends JavaPlugin
 
     // Base data file for plugin, factions and members, territories, etc.
     public FileConfiguration dataFile;
+    public FileConfiguration configFile;
 
     @Override
     public void onEnable() {
+        plugin = this;
         getLogger().info("Factions plugin enabled!");
+        loadConfig();
 
         // Creates commands
-        fm = new FactionCommand(this);
+        fm = new FactionCommand();
 
         // Creates event listener
-        listener = new EventListener(this);
+        listener = new EventListener();
         
         // Gets or creates data.yml file if not there
         File f = new File(getDataFolder() + File.separator + "data.yml");
@@ -48,6 +53,25 @@ public class Main extends JavaPlugin
         dataFile = YamlConfiguration.loadConfiguration(f);
         try { dataFile.save(f); }
         catch (IOException e) {}
+
+    }
+
+    @Override
+    public void onDisable()
+    {
+
+        saveConfig();
+        getLogger().info("Factions plugin disabled!");
+
+    }
+
+    private void loadConfig()
+    {
+
+        getConfig().options().copyDefaults(true);
+        saveConfig();
+
+        this.configFile = getConfig();
 
     }
 
