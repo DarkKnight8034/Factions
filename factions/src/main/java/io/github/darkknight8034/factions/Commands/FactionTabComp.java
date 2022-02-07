@@ -12,6 +12,15 @@ import io.github.darkknight8034.factions.Main;
 
 public class FactionTabComp implements TabCompleter
 {
+
+    private FactionCommand fc;
+
+    public FactionTabComp(FactionCommand fc)
+    {
+
+        this.fc = fc;
+
+    }
     
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args)
@@ -66,6 +75,17 @@ public class FactionTabComp implements TabCompleter
                     return new ArrayList<String>();
 
                 }
+
+            }
+            else if (args[0].equalsIgnoreCase("war"))
+            {
+
+                // All factions minus the one player is currently in
+                List<String> factions = fc.factions();
+                String faction = Main.plugin.dataFile.getString("players." + sender.getName());
+                factions.remove(faction);
+                
+                return factions;
 
             }
 

@@ -2,7 +2,7 @@ package io.github.darkknight8034.factions.Commands;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
-import org.bukkit.Effect;
+
 // Commands
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -32,7 +32,7 @@ public class FactionCommand implements CommandExecutor
 
         // Sets up command execution and tab completion
         Main.plugin.getCommand("faction").setExecutor(this);
-        Main.plugin.getCommand("faction").setTabCompleter(new FactionTabComp());
+        Main.plugin.getCommand("faction").setTabCompleter(new FactionTabComp(this));
 
         // Command aliases
         List<String> aliases = new ArrayList<String>();
@@ -86,17 +86,25 @@ public class FactionCommand implements CommandExecutor
 
     }
 
+    // Gets list of faction names
+    public List<String> factions()
+    {
+
+        // Creates config section
+        ConfigurationSection root = Main.plugin.dataFile.getConfigurationSection("factions");
+        // Gets keys (aka factions)
+        return (List<String>) root.getKeys(false);
+
+    }
+
     // Lists factions, green for if the player is in them
     private boolean listFactions(CommandSender sender, Command cmd, String label, String[] args)
     {
 
         Player player = (Player) sender;
 
-        // Creates section in config
-        ConfigurationSection root = Main.plugin.dataFile.getConfigurationSection("factions");
-
         // Gets keys in section, aka. the faction names
-        Set<String> factions = root.getKeys(false);
+        List<String> factions = factions();
         String display = "";
         int i = 0;
         for (String f : factions)
@@ -145,6 +153,15 @@ public class FactionCommand implements CommandExecutor
                 // Faction name
                 String name = args[1];
 
+                // No duplicate faction names
+                if (factions().contains(name))
+                {
+
+                    player.sendMessage(ChatColor.RED + "A faction with that name already exists!");
+                    return false;
+
+                }
+
                 // Removes levels from player
                 player.setLevel(player.getLevel() - Main.plugin.configFile.getInt("factions.createCost"));
 
@@ -158,6 +175,8 @@ public class FactionCommand implements CommandExecutor
 
                 List<Chunk> territory = new ArrayList<Chunk>();
 
+                List<String> enemies = new ArrayList<String>();
+
                 // Setting values in persistent data
                 File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
                 Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
@@ -167,6 +186,7 @@ public class FactionCommand implements CommandExecutor
                 Main.plugin.dataFile.set("factions." + name + ".coleaders", coleaders);
                 Main.plugin.dataFile.set("factions." + name + ".leader", player.getName());
                 Main.plugin.dataFile.set("factions." + name + ".territory", territory);
+                Main.plugin.dataFile.set("factions." + name + ".enemies", enemies);
 
                 // In game feedback
                 player.sendMessage(ChatColor.GREEN + "You have created the faction: " + name + "!");
@@ -507,4 +527,62 @@ public class FactionCommand implements CommandExecutor
 
     }
 
+    // Handles declaring war
+    private boolean war(CommandSender sender, Command cmd, String label, String[] args)
+    {
+
+        // Configurated to not allow wars
+        if (!Main.plugin.configFile.getBoolean("factions.war"))
+        {
+
+            return false;
+
+        }
+
+        // Getting factions
+        String faction = Main.plugin.dataFile.getString("players." + sender.getName());
+        String target = args[1];
+
+        // Only coleaders and leader are allowed to declare war
+        if (Main.plugin.dataFile.getList("factions." + faction + ".coleaders").contains(sender.getName()) || Main.plugin.dataFile.getString("factions." + faction + ".leader").equalsIgnoreCase(sender.getName()))
+        {
+
+            // Editing file
+            File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
+            Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
+
+            // Updates enemies for player faction
+            List<String> enemies = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
+            enemies.add(target);
+            Main.plugin.dataFile.set("factions." + faction + ".enemies", enemies);
+
+            // Updates enemies for target faction
+            enemies = (List<String>) Main.plugin.dataFile.getList("factions." + target + ".enemies");
+            enemies.add(faction);
+            Main.plugin.dataFile.set("factions." + target + ".enemies", enemies);
+            
+            // Saves file
+            try { Main.plugin.dataFile.save(f); }
+            catch (IOException e) {}
+
+            for (String p : (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".all"))
+            {
+
+                Main.plugin.getServer().getPlayer(p).sendMessage(ChatColor.RED + "Your faction has declared war against " + target + "!");
+
+            }
+
+            for (String p : (List<String>) Main.plugin.dataFile.getList("factions." + target + ".all"))
+            {
+
+                Main.plugin.getServer().getPlayer(p).sendMessage(ChatColor.RED + faction + " has declared war against your faction!");
+
+            }
+
+        }
+
+
+        return true;
+
+    }
 }
