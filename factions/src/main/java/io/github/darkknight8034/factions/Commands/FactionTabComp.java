@@ -6,6 +6,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 
 import io.github.darkknight8034.factions.Main;
@@ -81,11 +82,11 @@ public class FactionTabComp implements TabCompleter
             {
 
                 // All factions minus the one player is currently in
-                List<String> factions = fc.factions();
+                Set<String> factions = fc.factions();
                 String faction = Main.plugin.dataFile.getString("players." + sender.getName());
                 factions.remove(faction);
                 
-                return factions;
+                return (List<String>) factions;
 
             }
 

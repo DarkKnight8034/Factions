@@ -87,13 +87,13 @@ public class FactionCommand implements CommandExecutor
     }
 
     // Gets list of faction names
-    public List<String> factions()
+    public Set<String> factions()
     {
 
         // Creates config section
         ConfigurationSection root = Main.plugin.dataFile.getConfigurationSection("factions");
         // Gets keys (aka factions)
-        return (List<String>) root.getKeys(false);
+        return root.getKeys(false);
 
     }
 
@@ -104,13 +104,13 @@ public class FactionCommand implements CommandExecutor
         Player player = (Player) sender;
 
         // Gets keys in section, aka. the faction names
-        List<String> factions = factions();
-        String display = "";
+        Set<String> factions = factions();
+        String display = "Factions: ";
         int i = 0;
         for (String f : factions)
         {
 
-            if (Main.plugin.dataFile.getList("factions." + f + ".members").contains(player.getName())) 
+            if (Main.plugin.dataFile.getString("players." + player.getName()).equalsIgnoreCase(f))
             {
 
                 display += ChatColor.GREEN + f;
