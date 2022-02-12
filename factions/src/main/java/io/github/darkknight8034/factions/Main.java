@@ -76,9 +76,16 @@ public class Main extends JavaPlugin
     private void loadConfig()
     {
 
-        getConfig().options().copyDefaults(true);
-        saveConfig();
+        File f = new File(getDataFolder() + File.separator + "config.yml");
+        if (!f.exists())
+        {
 
+            getConfig().options().copyDefaults(true);
+            saveConfig();
+
+        }
+
+        saveConfig();
         this.configFile = getConfig();
 
     }

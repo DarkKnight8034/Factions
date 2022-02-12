@@ -2,7 +2,7 @@ package io.github.darkknight8034.factions.Commands;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
-
+import org.bukkit.Sound;
 // Commands
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -542,6 +542,7 @@ public class FactionCommand implements CommandExecutor
 
             // Feedback
             player.sendMessage(ChatColor.GREEN + "Chunk claimed!");
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 10);
 
             // Saves file
             try { Main.plugin.dataFile.save(f); }
