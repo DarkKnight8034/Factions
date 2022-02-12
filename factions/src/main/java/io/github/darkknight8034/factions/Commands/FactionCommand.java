@@ -80,6 +80,12 @@ public class FactionCommand implements CommandExecutor
                 return claim(sender, cmd, label, args);
 
             }
+            else if (args[0].equalsIgnoreCase("war"))
+            {
+
+                return war(sender, cmd, label, args);
+
+            }
 
         }
 
@@ -554,12 +560,21 @@ public class FactionCommand implements CommandExecutor
         if (!Main.plugin.configFile.getBoolean("factions.war"))
         {
 
+            sender.sendMessage(ChatColor.RED + "Wars are disabled on this server!");
             return false;
 
         }
 
         // Getting factions
         String faction = Main.plugin.dataFile.getString("players." + sender.getName());
+        if (faction == null)
+        {
+
+            sender.sendMessage(ChatColor.RED + "You need to be in a faction first!");
+            return false;
+
+        }
+
         String target = args[1];
 
         // Only coleaders and leader are allowed to declare war

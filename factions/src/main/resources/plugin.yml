@@ -7,6 +7,5 @@ description: Plugin for Factions server
 commands:
   faction:
     description: Handles faction based commands
-    usage: /faction <create|list|promote|demote|claim|war>
     aliases:
     - f

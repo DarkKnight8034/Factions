@@ -37,6 +37,7 @@ public class FactionTabComp implements TabCompleter
             vals.add("promote");
             vals.add("demote");
             vals.add("claim");
+            vals.add("war");
 
             return vals;
 
