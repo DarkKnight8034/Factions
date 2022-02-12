@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
@@ -92,8 +93,18 @@ public class FactionCommand implements CommandExecutor
 
         // Creates config section
         ConfigurationSection root = Main.plugin.dataFile.getConfigurationSection("factions");
-        // Gets keys (aka factions)
-        return root.getKeys(false);
+
+        // Error handling
+        if (root != null) 
+        {
+
+            // Gets keys (aka factions)
+            return root.getKeys(false);
+
+        }
+
+        Main.plugin.getLogger().info("No root to get factions");
+        return new HashSet<String>();
 
     }
 
@@ -105,31 +116,39 @@ public class FactionCommand implements CommandExecutor
 
         // Gets keys in section, aka. the faction names
         Set<String> factions = factions();
-        String display = "Factions: ";
-        int i = 0;
-        for (String f : factions)
+        if (factions.size() != 0)
         {
 
-            if (Main.plugin.dataFile.getString("players." + player.getName()).equalsIgnoreCase(f))
+            String display = "Factions: ";
+            int i = 0;
+            for (String f : factions)
             {
 
-                display += ChatColor.GREEN + f;
+                if (Main.plugin.dataFile.getString("players." + player.getName()).equalsIgnoreCase(f))
+                {
+
+                    display += ChatColor.GREEN + f;
+
+                }
+
+                if (i != factions.size() - 1)
+                {
+
+                    display += ", ";
+                    i ++;
+
+                }
 
             }
 
-            if (i != factions.size() - 1)
-            {
+            // Sends the list of factions
+            player.sendMessage(display);
 
-                display += ", ";
-                i ++;
-
-            }
-
+            return true;
+        
         }
 
-        // Sends the list of factions
-        player.sendMessage(display);
-
+        player.sendMessage("There are currently no factions!");
         return true;
 
     }

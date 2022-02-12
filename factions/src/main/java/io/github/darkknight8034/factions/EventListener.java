@@ -146,61 +146,65 @@ public class EventListener implements Listener
     {
 
         Block block = event.getClickedBlock();
-
-        // Not interacting with air
-        if (block.getType() != Material.AIR)
+        if (block != null) // Error handling
         {
 
-            String faction = Main.plugin.dataFile.getString("players." + event.getPlayer().getName());
-
-            // Players outside of a faction can do whatever they want
-            if (faction != null)
+            // Not interacting with air
+            if (block.getType() != Material.AIR)
             {
 
-                // Allowed to interact with doors
-                if (!block.getType().toString().contains("DOOR"))
+                String faction = Main.plugin.dataFile.getString("players." + event.getPlayer().getName());
+
+                // Players outside of a faction can do whatever they want
+                if (faction != null)
                 {
 
-                    String chunk = block.getChunk().getX() + "," + block.getChunk().getZ();
-
-                    // Not in faction's territory
-                    if (!Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+                    // Allowed to interact with doors
+                    if (!block.getType().toString().contains("DOOR"))
                     {
 
-                        List<String> factions = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
-                
-                        // Not in any wars
-                        if (factions.size() == 0)
+                        String chunk = block.getChunk().getX() + "," + block.getChunk().getZ();
+
+                        // Not in faction's territory
+                        if (!Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
                         {
 
-                            event.setCancelled(true);
-                            event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
-                        
-                        }
-                        else // checks if enemies have chunk
-                        {
-
-                            for (String f: factions)
+                            List<String> factions = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
+                    
+                            // Not in any wars
+                            if (factions.size() == 0)
                             {
 
-                                // Found chunk, done search
-                                if (Main.plugin.dataFile.getList("factions." + f + ".territory").contains(chunk))
-                                {
-
-                                    break;
-                                
-                                }
+                                event.setCancelled(true);
+                                event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
                             
                             }
-                            
-                        }
+                            else // checks if enemies have chunk
+                            {
 
+                                for (String f: factions)
+                                {
+
+                                    // Found chunk, done search
+                                    if (Main.plugin.dataFile.getList("factions." + f + ".territory").contains(chunk))
+                                    {
+
+                                        break;
+                                    
+                                    }
+                                
+                                }
+                                
+                            }
+
+                        }
+                    
                     }
-                
+
                 }
 
             }
-
+        
         }
 
     }
