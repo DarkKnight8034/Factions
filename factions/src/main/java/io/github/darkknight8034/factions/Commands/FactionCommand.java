@@ -493,7 +493,7 @@ public class FactionCommand implements CommandExecutor
         if (faction == null)
         {
 
-            player.sendMessage(ChatColor.RED + "You must be in a faction first!");
+            player.sendMessage(ChatColor.RED + "You need to be in a faction first!");
             return false;
 
         }
@@ -576,6 +576,13 @@ public class FactionCommand implements CommandExecutor
         }
 
         String target = args[1];
+        if (!factions().contains(target))
+        {
+
+            sender.sendMessage(ChatColor.RED + "Target faction is invalid!");
+            return false;
+
+        }
 
         // Only coleaders and leader are allowed to declare war
         if (Main.plugin.dataFile.getList("factions." + faction + ".coleaders").contains(sender.getName()) || Main.plugin.dataFile.getString("factions." + faction + ".leader").equalsIgnoreCase(sender.getName()))
