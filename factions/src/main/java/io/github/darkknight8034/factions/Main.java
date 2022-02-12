@@ -3,6 +3,9 @@ package io.github.darkknight8034.factions;
 // Plugin
 import org.bukkit.plugin.java.JavaPlugin;
 
+// Bukkit
+import org.bukkit.WorldBorder;
+
 // IO Imports
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -53,6 +56,11 @@ public class Main extends JavaPlugin
         dataFile = YamlConfiguration.loadConfiguration(f);
         try { dataFile.save(f); }
         catch (IOException e) {}
+
+        // Sets world border
+        WorldBorder border = getServer().getWorlds().get(0).getWorldBorder();
+        border.setCenter(0, 0);
+        border.setSize(configFile.getInt("world.border") * 2);
 
     }
 

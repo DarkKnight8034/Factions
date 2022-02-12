@@ -6,3 +6,6 @@ factions:
   maxTerritory: 
   # Players can declare war
   war: true
+world:
+  # Set to 0 for normal border
+  border: 2500
