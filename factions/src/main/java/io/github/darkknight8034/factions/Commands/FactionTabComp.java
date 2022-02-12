@@ -84,10 +84,18 @@ public class FactionTabComp implements TabCompleter
 
                 // All factions minus the one player is currently in
                 Set<String> factions = fc.factions();
-                String faction = Main.plugin.dataFile.getString("players." + sender.getName());
-                factions.remove(faction);
-                
-                return (List<String>) factions;
+
+                if (factions.size() > 0)
+                {
+
+                    String faction = Main.plugin.dataFile.getString("players." + sender.getName());
+                    factions.remove(faction);
+                    return new ArrayList<String> (factions);        
+
+                }
+
+                return new ArrayList<String>();
+            
 
             }
 

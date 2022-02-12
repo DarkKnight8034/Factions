@@ -1,5 +1,6 @@
 package io.github.darkknight8034.factions;
 
+import org.bukkit.event.Event;
 // Listener stuff
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -8,7 +9,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.entity.EntityType;
 // Bukkit
 import org.bukkit.entity.Player;
@@ -17,6 +19,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.ChatColor;
 
+import java.util.ArrayList;
 // Java
 import java.util.List;
 import java.util.Set;
@@ -47,40 +50,16 @@ public class EventListener implements Listener
         if (faction != null)
         {
 
-            // Gets string version of chunk data
+            // Gets chunk
             String chunk = event.getBlock().getChunk().getX() + "," + event.getBlock().getChunk().getZ();
 
-            // Not in their own territory
-            if (!Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+            // Checks if event can continue
+            if (!checkTerritories(event, faction, chunk))
             {
 
-                List<String> factions = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
-            
-                // Not in any wars
-                if (factions.size() == 0)
-                {
-
-                    event.setCancelled(true);
-                    event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
-                
-                }
-                else // checks if enemies have chunk
-                {
-
-                    for (String f: factions)
-                    {
-
-                        // Found chunk, done search
-                        if (Main.plugin.dataFile.getList("factions." + f + ".territory").contains(chunk))
-                        {
-
-                            break;
-                        
-                        }
-                    
-                    }
-                    
-                }
+                Main.plugin.getLogger().info("Block break event canceled!");
+                event.setCancelled(true);
+                event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
 
             }
 
@@ -99,112 +78,101 @@ public class EventListener implements Listener
         if (faction != null)
         {
 
-            // Gets string version of chunk data
+            // Gets chunk
             String chunk = event.getBlock().getChunk().getX() + "," + event.getBlock().getChunk().getZ();
 
-            // Not in their own territory
-            if (!Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+            // Checks if event can continue
+            if (!checkTerritories(event, faction, chunk))
             {
 
-                List<String> factions = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
+                Main.plugin.getLogger().info("Block place event canceled!");
+                event.setCancelled(true);
+                event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
+
+            }
             
-                // Not in any wars
-                if (factions.size() == 0)
-                {
+        }
 
-                    event.setCancelled(true);
-                    event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
-                
-                }
-                else // checks if enemies have chunk
-                {
+    }
 
-                    for (String f: factions)
-                    {
+    // Checks for territory boundaries
+    private boolean checkTerritories(Event event, String faction, String chunk)
+    {
 
-                        // Found chunk, done search
-                        if (Main.plugin.dataFile.getList("factions." + f + ".territory").contains(chunk))
-                        {
+        // Chunk is within faction's territory, good to go
+        if (Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+        {
 
-                            break;
-                        
-                        }
-                    
-                    }
-                    
-                }
+            return true;
+
+        }
+
+        Set<String> factions = Main.plugin.fm.factions();
+        factions.remove(faction);
+
+        List<String> enemies = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
+
+        // Allowed to do stuff in enemy territory
+        for (String e : enemies)
+        {
+
+            factions.remove(e);
+
+        }
+
+        for (String f : factions)
+        {
+
+            // Chunk in non waring factions territory
+            if (Main.plugin.dataFile.getList("factions." + f +  ".territory").contains(chunk))
+            {
+
+                Main.plugin.getLogger().warning(f);
+                return false;
 
             }
 
         }
 
+        return true;
+
     }
 
     // Handles block interaction events
     @EventHandler
-    public void interactEvent(PlayerInteractEvent event)
+    public void interactEvent(InventoryOpenEvent event)
     {
 
-        Block block = event.getClickedBlock();
-        if (block != null) // Error handling
+        // Allowed inventories to open at all times
+        List<InventoryType> allowed = new ArrayList<InventoryType>();
+        allowed.add(InventoryType.PLAYER);
+        allowed.add(InventoryType.MERCHANT);
+
+        // Not always allowed, must
+        if (!allowed.contains(event.getView().getType()))
         {
 
-            // Not interacting with air
-            if (block.getType() != Material.AIR)
-            {
+            String faction = Main.plugin.dataFile.getString("players." + event.getPlayer().getName());
 
-                String faction = Main.plugin.dataFile.getString("players." + event.getPlayer().getName());
+            // None faction members can do what they want
+            if (faction != null)
+            {  
 
-                // Players outside of a faction can do whatever they want
-                if (faction != null)
+                // Gets chunk
+                String chunk = event.getInventory().getLocation().getChunk().getX() + "," + event.getInventory().getLocation().getChunk().getZ();
+
+                // Checks if event can continue
+                if (!checkTerritories(event, faction, chunk))
                 {
-
-                    // Allowed to interact with doors
-                    if (!block.getType().toString().contains("DOOR"))
-                    {
-
-                        String chunk = block.getChunk().getX() + "," + block.getChunk().getZ();
-
-                        // Not in faction's territory
-                        if (!Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
-                        {
-
-                            List<String> factions = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
-                    
-                            // Not in any wars
-                            if (factions.size() == 0)
-                            {
-
-                                event.setCancelled(true);
-                                event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
-                            
-                            }
-                            else // checks if enemies have chunk
-                            {
-
-                                for (String f: factions)
-                                {
-
-                                    // Found chunk, done search
-                                    if (Main.plugin.dataFile.getList("factions." + f + ".territory").contains(chunk))
-                                    {
-
-                                        break;
-                                    
-                                    }
-                                
-                                }
-                                
-                            }
-
-                        }
-                    
-                    }
-
+    
+                    Main.plugin.getLogger().info("Block place event canceled!");
+                    event.setCancelled(true);
+                    event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
+    
                 }
-
+            
             }
-        
+
         }
 
     }
@@ -214,8 +182,8 @@ public class EventListener implements Listener
     public void entityAttackEvent(EntityDamageByEntityEvent event)
     {
 
-        // Only runs if player did damage
-        if (event.getDamager().getType() == EntityType.PLAYER)
+        // Only runs if player did damage to another player
+        if (event.getDamager().getType() == EntityType.PLAYER && event.getEntity().getType() != EntityType.PLAYER)
         {
 
             String faction = Main.plugin.dataFile.getString("players." + event.getDamager().getName());
@@ -224,40 +192,16 @@ public class EventListener implements Listener
             {
 
                 // Gets string form of chunk location
-                String chunk = event.getDamager().getLocation().getChunk().getX() + "," + event.getDamager().getLocation().getChunk().getZ();
+                String chunk = event.getEntity().getLocation().getChunk().getX() + "," + event.getEntity().getLocation().getChunk().getZ();
 
-                // Not in faction's territory
-                if (!Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+                // Checks if event can continue
+                if (!checkTerritories(event, faction, chunk))
                 {
-
-                    List<String> factions = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
-                
-                    // Not in any wars
-                    if (factions.size() == 0)
-                    {
-
-                        event.setCancelled(true);
-                        event.getDamager().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
-                    
-                    }
-                    else // checks if enemies have chunk
-                    {
-
-                        for (String f: factions)
-                        {
-
-                            // Found chunk, done search
-                            if (Main.plugin.dataFile.getList("factions." + f + ".territory").contains(chunk))
-                            {
-
-                                break;
-                            
-                            }
-                        
-                        }
-                        
-                    }
-
+    
+                    Main.plugin.getLogger().info("Block place event canceled!");
+                    event.setCancelled(true);
+                    event.getDamager().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
+    
                 }
 
             }

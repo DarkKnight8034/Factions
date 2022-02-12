@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Set;
+
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.io.File;
@@ -575,11 +576,44 @@ public class FactionCommand implements CommandExecutor
 
         }
 
+        // Only leaders and coleaders can declare war
+        if (Main.plugin.dataFile.getList("factions." + faction + ".members").contains(sender.getName()))
+        {
+
+            sender.sendMessage("Only leaders and coleaders can declare war!");
+            return false;
+
+        }
+
+        if (args.length == 1)
+        {
+
+            sender.sendMessage("You need to provide a target faction!");
+            return false;
+
+        }
         String target = args[1];
         if (!factions().contains(target))
         {
 
             sender.sendMessage(ChatColor.RED + "Target faction is invalid!");
+            return false;
+
+        }
+
+        if (Main.plugin.dataFile.getList("factions." + faction + ".enemies").contains(target))
+        {
+
+            sender.sendMessage("You are already in a war with this faction!");
+            return false;
+
+        }
+
+        // lol
+        if (faction.equalsIgnoreCase(target))
+        {
+
+            sender.sendMessage("You can't declare war against your own faction!");
             return false;
 
         }
