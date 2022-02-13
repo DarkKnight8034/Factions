@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.tools.DocumentationTool.Location;
+
 // Files
 import io.github.darkknight8034.factions.Main;
 
@@ -58,6 +60,7 @@ public class EventListener implements Listener
     {
 
         String faction = Main.plugin.dataFile.getString("players." + event.getPlayer().getName());
+        String world = (event.getPlayer().getWorld().getName().endsWith("_nether")) ? "nether" : "overworld";
 
         // Player is in a faction, territories must be checked
         if (faction != null)
@@ -67,10 +70,9 @@ public class EventListener implements Listener
             String chunk = event.getBlock().getChunk().getX() + "," + event.getBlock().getChunk().getZ();
 
             // Checks if event can continue
-            if (!checkTerritories(event, faction, chunk))
+            if (!checkTerritories(event, faction, chunk, world))
             {
 
-                Main.plugin.getLogger().info("Block break event canceled!");
                 event.setCancelled(true);
                 event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
 
@@ -85,7 +87,8 @@ public class EventListener implements Listener
     public void blockPlaceEvent(BlockPlaceEvent event)
     {
 
-        String faction = Main.plugin.dataFile.getString("players." + event.getPlayer().getName());
+        String faction = Main.plugin.getFaction(event.getPlayer().getName());
+        String world = (event.getPlayer().getWorld().getName().endsWith("_nether")) ? "nether" : "overworld";
 
         // Player is in a faction, territories must be checked
         if (faction != null)
@@ -95,10 +98,9 @@ public class EventListener implements Listener
             String chunk = event.getBlock().getChunk().getX() + "," + event.getBlock().getChunk().getZ();
 
             // Checks if event can continue
-            if (!checkTerritories(event, faction, chunk))
+            if (!checkTerritories(event, faction, chunk, world))
             {
 
-                Main.plugin.getLogger().info("Block place event canceled!");
                 event.setCancelled(true);
                 event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
 
@@ -109,11 +111,11 @@ public class EventListener implements Listener
     }
 
     // Checks for territory boundaries
-    private boolean checkTerritories(Event event, String faction, String chunk)
+    private boolean checkTerritories(Event event, String faction, String chunk, String world)
     {
 
         // Chunk is within faction's territory, good to go
-        if (Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+        if (Main.plugin.getTerritory(faction, world).contains(chunk))
         {
 
             return true;
@@ -123,7 +125,7 @@ public class EventListener implements Listener
         Set<String> factions = Main.plugin.factionManager.factions();
         factions.remove(faction);
 
-        List<String> enemies = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
+        List<String> enemies = Main.plugin.getEnemies(faction);
 
         // Allowed to do stuff in enemy territory
         for (String e : enemies)
@@ -137,7 +139,7 @@ public class EventListener implements Listener
         {
 
             // Chunk in non waring factions territory
-            if (Main.plugin.dataFile.getList("factions." + f +  ".territory").contains(chunk))
+            if (Main.plugin.getTerritory(faction, world).contains(chunk))
             {
 
                 Main.plugin.getLogger().warning(f);
@@ -165,7 +167,9 @@ public class EventListener implements Listener
         if (!allowed.contains(event.getView().getType()))
         {
 
-            String faction = Main.plugin.dataFile.getString("players." + event.getPlayer().getName());
+            String faction = Main.plugin.getFaction(event.getPlayer().getName());
+            String world = (event.getPlayer().getWorld().getName().endsWith("_nether")) ? "nether" : "overworld";
+
 
             // None faction members can do what they want
             if (faction != null)
@@ -175,10 +179,9 @@ public class EventListener implements Listener
                 String chunk = event.getInventory().getLocation().getChunk().getX() + "," + event.getInventory().getLocation().getChunk().getZ();
 
                 // Checks if event can continue
-                if (!checkTerritories(event, faction, chunk))
+                if (!checkTerritories(event, faction, chunk, world))
                 {
     
-                    Main.plugin.getLogger().info("Block place event canceled!");
                     event.setCancelled(true);
                     event.getPlayer().sendMessage(ChatColor.RED + "You aren't allowed to do that here!");
     
@@ -206,9 +209,10 @@ public class EventListener implements Listener
 
                 // Gets string form of chunk location
                 String chunk = event.getEntity().getLocation().getChunk().getX() + "," + event.getEntity().getLocation().getChunk().getZ();
+                String world = (event.getEntity().getWorld().getName().endsWith("_nether")) ? "nether" : "overworld";
 
                 // Checks if event can continue
-                if (!checkTerritories(event, faction, chunk))
+                if (!checkTerritories(event, faction, chunk, world))
                 {
     
                     Main.plugin.getLogger().info("Block place event canceled!");
@@ -235,7 +239,7 @@ public class EventListener implements Listener
         {
 
             String chunk = current.getX() + "," + current.getZ();
-            String faction = Main.plugin.factionManager.getFactionFromChunk(chunk);
+            String faction = Main.plugin.factionManager.getFactionFromLocation(event.getPlayer().getLocation());
 
             BarColor color = BarColor.RED;
 

@@ -113,10 +113,10 @@ public class Main extends JavaPlugin
 
     }
 
-    public List<String> getTerritory(String faction)
+    public List<String> getTerritory(String faction, String world)
     {
 
-        return dataFile.getStringList("factions." + faction + ".territory");
+        return dataFile.getStringList("factions." + faction + ".territory." + world);
 
     }
 

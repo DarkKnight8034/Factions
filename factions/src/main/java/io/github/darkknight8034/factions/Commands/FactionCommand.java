@@ -1,8 +1,11 @@
 package io.github.darkknight8034.factions.Commands;
 
+// Bukkit
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Sound;
+import org.bukkit.Location;
+
 // Commands
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -452,76 +455,63 @@ public class FactionCommand implements CommandExecutor
     private boolean claim(CommandSender sender, Command cmd, String label, String[] args)
     {
 
+        // Gets variables
         Player player = (Player) sender;
-        String faction = Main.plugin.getFaction(player.getName());
+        Location location = player.getLocation();
+        String faction = Main.plugin.getFaction(sender.getName());
 
-        // Cannot claim land when not in a faction
-        if (faction == null)
+        // Must be in a faction
+        if (faction != null)
         {
 
-            player.sendMessage(ChatColor.RED + "You need to be in a faction first!");
-            return false;
+            // Checking if player has enough xp
+            if (player.getLevel() <= Main.plugin.configFile.getInt("factions.chunkCost"))
+            {
 
-        }
-        
-        // Gets chunk
-        Chunk current = player.getLocation().getChunk();
-        // Gets chunks claimed by faction
-        List<String> chunks = Main.plugin.getTerritory(faction);
+                sender.sendMessage("You need " + (Main.plugin.configFile.getInt("factions.chunkCost") - player.getLevel()) + " more levels to calim territory!");
+                return false;
 
-        // Already claimed
-        String serialized = current.getX() + "," + current.getZ();
-        if (chunks.contains(serialized))
-        {
+            }
 
-            player.sendMessage("Chunk already claimed!");
-            return false;
+            // String version of chunk
+            String chunk = location.getChunk().getX() + "," + location.getChunk().getZ();
+            // Gets world
+            String world = (location.getWorld().getName().endsWith("_nether")) ? "nether" : "overworld";
 
-        }
+            if (Main.plugin.getTerritory(faction, world).contains(chunk))
+            {
 
-        // Max land claimed
-        int max = Main.plugin.configFile.getInt("factions.maxTerritory");
-        Main.plugin.getLogger().info("" + max);
-        if (chunks.size() >= max && max != 0)
-        {
+                sender.sendMessage("Your faction already has this chunk!");
+                return false;
 
-            player.sendMessage(ChatColor.RED + "Max territory reached!");
-            return false;
+            }
 
-        }
+            // Makes sure other faction doesn't own chunk
+            for (String f : Main.plugin.factionManager.factions())
+            {
 
-        // Player has enough xp
-        if (player.getLevel() >= Main.plugin.configFile.getInt("factions.chunkCost"))
-        {
+                if (Main.plugin.getTerritory(f, world).contains(chunk))
+                {
 
-            // Removes xp
+                    sender.sendMessage(f + " has already claimed this chunk!");
+                    return false;
+
+                }
+
+            }
+
+            // Claims territory
+            Main.plugin.factionManager.claimChunk(faction, location);
+
+            // Removes xp from player
             player.setLevel(player.getLevel() - Main.plugin.configFile.getInt("factions.chunkCost"));
-            chunks.add(serialized);
-
-            // Editing file
-            File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
-            Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
-
-            // Writes new chunk
-            Main.plugin.dataFile.set("factions." + faction + ".territory", chunks);
-
-            // Feedback
-            player.sendMessage(ChatColor.GREEN + "Chunk claimed!");
-            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 10);
-
-            // Saves file
-            try { Main.plugin.dataFile.save(f); }
-            catch (IOException e) {}
-
-        }
-        else
-        {
-
-            player.sendMessage("You need " + (Main.plugin.configFile.getInt("factions.chunkCost") - player.getLevel()) + " more levels to claim land!");
+            return true;
 
         }
 
-        return true;
+        // So sad
+        sender.sendMessage("You need to be in a faction before you can claim land!");
+        return false;
 
     }
 

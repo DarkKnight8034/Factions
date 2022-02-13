@@ -4,6 +4,7 @@ package io.github.darkknight8034.factions;
 import java.io.File;
 import java.io.IOException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.configuration.ConfigurationSection;
 
 // utils
@@ -15,6 +16,7 @@ import java.util.HashSet;
 // bukkit
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 
 import io.github.darkknight8034.factions.Main;
 
@@ -183,6 +185,39 @@ public class FactionManager {
 
     }
 
+    public void claimChunk(String faction, Location location)
+    {
+
+        // Gets variables
+        Chunk chunk = location.getChunk();
+        String c = chunk.getX() + "," + chunk.getZ();
+
+        String world = "overworld";
+
+        if (location.getWorld().getName().endsWith("_nether"))
+        {
+
+            world = "nether";
+
+        }
+
+        // Setting values in persistent data
+        File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
+        Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
+
+        // Edits territory
+        List<String> territory = Main.plugin.getTerritory(faction, world);
+        territory.add(c);
+
+        Main.plugin.dataFile.set("factions." + faction + ".territory." + world, territory);
+
+        // Saves file
+        try { Main.plugin.dataFile.save(f); }
+        catch (IOException e) {}
+
+
+    }
+
     // Gets list of faction names
     public Set<String> factions()
     {
@@ -205,23 +240,49 @@ public class FactionManager {
     }
 
     // Gets faction containing chunk, returns null if not claimed
-    public String getFactionFromChunk(String chunk)
+    public String getFactionFromLocation(Location location)
     {
 
-        for (String faction : factions())
+        Chunk chunk = location.getChunk();
+        String c = chunk.getX() + "," + chunk.getZ();
+
+        if (location.getWorld().getName().endsWith("_nether")) // Nether chunk
         {
 
-            if (Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+            for (String faction : factions())
             {
 
-                return faction;
+                if (Main.plugin.getTerritory(faction, "nether").contains(c))
+                {
+
+                    return faction;
+
+                }
 
             }
 
         }
+        else // Overworld
+        {
+
+            for (String faction : factions())
+            {
+    
+                if (Main.plugin.getTerritory(faction, "overworld").contains(c))
+                {
+    
+                    return faction;
+    
+                }
+    
+            }
+
+        }
+
+       
 
         return null;
 
     }
-
+    
 }
