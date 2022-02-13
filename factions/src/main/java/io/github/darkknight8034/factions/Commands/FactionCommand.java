@@ -575,6 +575,7 @@ public class FactionCommand implements CommandExecutor
 
     }
 
+    // Handles inviting players to faction
     private boolean invite(CommandSender sender, Command cmd, String label, String[] args)
     {
 
@@ -594,6 +595,7 @@ public class FactionCommand implements CommandExecutor
         if (faction != null)
         {
 
+            // Creates and sends invite message to player
             TextComponent msg = new TextComponent(sender.getName() + " has invited you to their faction, " + faction +  ".");
             msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("Accept invite")));
             msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/faction join " + faction));
