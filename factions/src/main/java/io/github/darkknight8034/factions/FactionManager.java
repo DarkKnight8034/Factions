@@ -204,4 +204,24 @@ public class FactionManager {
 
     }
 
+    // Gets faction containing chunk, returns null if not claimed
+    public String getFactionFromChunk(String chunk)
+    {
+
+        for (String faction : factions())
+        {
+
+            if (Main.plugin.dataFile.getList("factions." + faction + ".territory").contains(chunk))
+            {
+
+                return faction;
+
+            }
+
+        }
+
+        return null;
+
+    }
+
 }
