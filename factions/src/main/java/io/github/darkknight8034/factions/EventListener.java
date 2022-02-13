@@ -11,15 +11,25 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.entity.EntityType;
+
 // Bukkit
 import org.bukkit.entity.Player;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarFlag;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 // Java
 import java.util.List;
 import java.util.Set;
@@ -30,6 +40,8 @@ import io.github.darkknight8034.factions.Main;
 
 public class EventListener implements Listener
 {
+
+    private Map<String, Chunk> location = new HashMap<String, Chunk>();
 
     public EventListener()
     {
@@ -205,6 +217,51 @@ public class EventListener implements Listener
                 }
 
             }
+
+        }
+
+    }
+
+
+    // Boss bar for faction player is in
+    @EventHandler
+    public void playerMoveEvent(PlayerMoveEvent event)
+    {
+
+        Chunk current = event.getPlayer().getLocation().getChunk();
+        // Player moved chunks
+        if (location.get(event.getPlayer().getName()) != current)
+        {
+
+            String chunk = current.getX() + "," + current.getZ();
+            String faction = Main.plugin.factionManager.getFactionFromChunk(chunk);
+
+            BarColor color = BarColor.RED;
+
+            // Player is in their own faction's territory
+            if (Main.plugin.dataFile.getString("players." + event.getPlayer().getName()).equalsIgnoreCase(faction))
+            {
+
+                color = BarColor.GREEN;
+
+            }
+
+            // In wilderness
+            if (faction == null)
+            {
+
+                color = BarColor.PURPLE;
+                faction = "Wilderness";
+
+            }
+
+            // Creates boss bar
+            BossBar bar = Main.plugin.getServer().createBossBar(faction, color, BarStyle.SOLID);
+            bar.addPlayer(event.getPlayer());
+            bar.setVisible(true);
+        
+            // Updates player location in map
+            location.put(event.getPlayer().getName(), current);
 
         }
 
