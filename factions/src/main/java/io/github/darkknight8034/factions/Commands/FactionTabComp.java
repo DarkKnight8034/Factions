@@ -105,6 +105,19 @@ public class FactionTabComp implements TabCompleter
                 return players;
 
             }
+            else if (args[0].equalsIgnoreCase("kick"))
+            {
+
+                String faction = Main.plugin.getFaction(sender.getName());
+                if (faction == null)
+                {
+
+                    return null;
+                    
+                }
+
+                
+            }
 
         }
 

@@ -12,6 +12,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 
+// utils
+import java.util.List;
+
 // Files
 import io.github.darkknight8034.factions.EventListener;
 import io.github.darkknight8034.factions.FactionManager;
@@ -102,5 +105,61 @@ public class Main extends JavaPlugin
 
     }
 
+    // utility functions
+    public String getFaction(String player)
+    {
+
+        return dataFile.getString("players." + player);
+
+    }
+
+    public List<String> getTerritory(String faction)
+    {
+
+        return dataFile.getStringList("factions." + faction + ".territory");
+
+    }
+
+    public List<String> getAll(String faction)
+    {
+
+        return dataFile.getStringList("factions." + faction + ".all");
+
+    }
+
+    public List<String> getColeaders(String faction)
+    {
+
+        return dataFile.getStringList("factions." + faction + ".coleaders");
+
+    }
+
+    public List<String> getMembers(String faction)
+    {
+
+        return dataFile.getStringList("factions." + faction + ".members");
+
+    }
+
+    public String getLeader(String faction)
+    {
+
+        return dataFile.getString("factions." + faction + ".leader");
+
+    }
+
+    public List<String> getInvited(String faction)
+    {
+
+        return dataFile.getStringList("factions." + faction + ".invited");
+
+    }
+
+    public List<String> getEnemies(String faction)
+    {
+
+        return dataFile.getStringList("factions." + faction + ".enemies");
+
+    }
 
 }

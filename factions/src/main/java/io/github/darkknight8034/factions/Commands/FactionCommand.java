@@ -103,6 +103,24 @@ public class FactionCommand implements CommandExecutor
                 return invite(sender, cmd, label, args);
 
             }
+            else if (args[0].equalsIgnoreCase("kick"))
+            {
+
+                return kick(sender, cmd, label, args);
+            
+            }
+            else if (args[0].equalsIgnoreCase("leave"))
+            {
+
+                String faction = Main.plugin.getFaction(sender.getName());
+                if (faction != null)
+                {
+
+                    Main.plugin.factionManager.leaveFaction(faction, sender.getName());
+
+                }
+
+            }
 
         }
 
@@ -216,12 +234,29 @@ public class FactionCommand implements CommandExecutor
 
         Player player = (Player) sender;
 
+        // Error handling
+        if (args.length == 1)
+        {
+
+            player.sendMessage("You need to give a player name!");
+            return false;
+        
+        }
+
         // Gets player to be promoted
         Player target = Main.plugin.getServer().getPlayer(args[1]);
+        // Error handling
+        if (target == null)
+        {
+
+            player.sendMessage("Player: " + args[1] + ", could not be found.");
+            return false;
+
+        }
 
         // Gets factions of involved players
-        String pFaction = Main.plugin.dataFile.getString("players." + player.getName());
-        String tFaction = Main.plugin.dataFile.getString("players." + target.getName());
+        String pFaction = Main.plugin.getFaction(player.getName());
+        String tFaction = Main.plugin.getFaction(target.getName());
 
         // Have to be in the same faction
         if (!pFaction.equalsIgnoreCase(tFaction))
@@ -249,12 +284,29 @@ public class FactionCommand implements CommandExecutor
 
         Player player = (Player) sender;
 
+        // Error handling
+        if (args.length == 1)
+        {
+
+            player.sendMessage("You need to give a player name!");
+            return false;
+        
+        }
+
         // Gets player to be promoted
         Player target = Main.plugin.getServer().getPlayer(args[1]);
+        // Error hanlding
+        if (target == null)
+        {
+
+            player.sendMessage("Player: " + args[1] + ", could not be found.");
+            return false;
+
+        }
 
         // Gets factions of involved players
-        String pFaction = Main.plugin.dataFile.getString("players." + player.getName());
-        String tFaction = Main.plugin.dataFile.getString("players." + target.getName());
+        String pFaction = Main.plugin.getFaction(player.getName());
+        String tFaction = Main.plugin.getFaction(target.getName());
 
         // Have to be in the same faction
         if (!pFaction.equalsIgnoreCase(tFaction))
@@ -401,7 +453,7 @@ public class FactionCommand implements CommandExecutor
     {
 
         Player player = (Player) sender;
-        String faction = Main.plugin.dataFile.getString("players." + player.getName());
+        String faction = Main.plugin.getFaction(player.getName());
 
         // Cannot claim land when not in a faction
         if (faction == null)
@@ -415,7 +467,7 @@ public class FactionCommand implements CommandExecutor
         // Gets chunk
         Chunk current = player.getLocation().getChunk();
         // Gets chunks claimed by faction
-        List<String> chunks = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".territory");
+        List<String> chunks = Main.plugin.getTerritory(faction);
 
         // Already claimed
         String serialized = current.getX() + "," + current.getZ();
@@ -487,7 +539,7 @@ public class FactionCommand implements CommandExecutor
         }
 
         // Getting factions
-        String faction = Main.plugin.dataFile.getString("players." + sender.getName());
+        String faction = Main.plugin.getFaction(sender.getName());
         if (faction == null)
         {
 
@@ -497,7 +549,7 @@ public class FactionCommand implements CommandExecutor
         }
 
         // Only leaders and coleaders can declare war
-        if (Main.plugin.dataFile.getList("factions." + faction + ".members").contains(sender.getName()))
+        if (Main.plugin.getMembers(faction).contains(sender.getName()))
         {
 
             sender.sendMessage("Only leaders and coleaders can declare war!");
@@ -521,7 +573,7 @@ public class FactionCommand implements CommandExecutor
 
         }
 
-        if (Main.plugin.dataFile.getList("factions." + faction + ".enemies").contains(target))
+        if (Main.plugin.getEnemies(faction).contains(target))
         {
 
             sender.sendMessage("You are already in a war with this faction!");
@@ -539,7 +591,7 @@ public class FactionCommand implements CommandExecutor
         }
 
         // Only coleaders and leader are allowed to declare war
-        if (Main.plugin.dataFile.getList("factions." + faction + ".coleaders").contains(sender.getName()) || Main.plugin.dataFile.getString("factions." + faction + ".leader").equalsIgnoreCase(sender.getName()))
+        if (Main.plugin.getColeaders(faction).contains(sender.getName()) || Main.plugin.getLeader(faction).equalsIgnoreCase(sender.getName()))
         {
 
             // Editing file
@@ -547,12 +599,12 @@ public class FactionCommand implements CommandExecutor
             Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
 
             // Updates enemies for player faction
-            List<String> enemies = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");
+            List<String> enemies = Main.plugin.getEnemies(faction);
             enemies.add(target);
             Main.plugin.dataFile.set("factions." + faction + ".enemies", enemies);
 
             // Updates enemies for target faction
-            enemies = (List<String>) Main.plugin.dataFile.getList("factions." + target + ".enemies");
+            enemies = Main.plugin.getEnemies(target);
             enemies.add(faction);
             Main.plugin.dataFile.set("factions." + target + ".enemies", enemies);
             
@@ -560,14 +612,14 @@ public class FactionCommand implements CommandExecutor
             try { Main.plugin.dataFile.save(f); }
             catch (IOException e) {}
 
-            for (String p : (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".all"))
+            for (String p : Main.plugin.getAll(faction))
             {
 
                 Main.plugin.getServer().getPlayer(p).sendMessage(ChatColor.RED + "Your faction has declared war against " + target + "!");
 
             }
 
-            for (String p : (List<String>) Main.plugin.dataFile.getList("factions." + target + ".all"))
+            for (String p : (List<String>) Main.plugin.getAll(target))
             {
 
                 Main.plugin.getServer().getPlayer(p).sendMessage(ChatColor.RED + faction + " has declared war against your faction!");
@@ -586,7 +638,7 @@ public class FactionCommand implements CommandExecutor
     {
 
         // Gets faction
-        String faction = Main.plugin.dataFile.getString("players." + sender.getName());
+        String faction = Main.plugin.getFaction(sender.getName());
         if (args.length == 1)
         {
 
@@ -599,7 +651,7 @@ public class FactionCommand implements CommandExecutor
         if (player == null)
         {
 
-            sender.sendMessage(args[1] + " is offline. Invited them again when they are online.");
+            sender.sendMessage(args[1] + " is offline. Invite them again when they are online.");
             return false;
 
         }
@@ -620,6 +672,7 @@ public class FactionCommand implements CommandExecutor
 
     }
 
+    // Handles joining factions
     private boolean join(CommandSender sender, Command cmd, String label, String[] args)
     {
 
@@ -635,7 +688,7 @@ public class FactionCommand implements CommandExecutor
         String faction = args[1];
 
         // Player joins faction if invited
-        if (Main.plugin.dataFile.getList("factions." + faction + ".invited").contains(sender.getName()))
+        if (Main.plugin.getInvited(faction).contains(sender.getName()))
         {
 
             Main.plugin.factionManager.joinFaction(faction, sender.getName());
@@ -644,6 +697,66 @@ public class FactionCommand implements CommandExecutor
 
         return true;
     
+    }
+
+    // Handles kicking people from factions
+    private boolean kick(CommandSender sender, Command cmd, String label, String[] args)
+    {
+
+        String faction = Main.plugin.getFaction(sender.getName());
+        if (faction == null) // Not in a faction
+        {
+
+            return false;
+            
+        }
+
+        if (args.length == 1)
+        {
+
+            sender.sendMessage("You need to give a player name!");
+            return false;
+
+        }
+
+        // Gets player being kicked
+        String player = args[1];
+
+        // Player not in faction
+        if (!Main.plugin.getAll(faction).contains(player))
+        {
+
+            sender.sendMessage("Player not in faction.");
+            return false;
+
+        }
+
+        // Leaving
+        if (sender.getName().equalsIgnoreCase(player))
+        {
+
+            Main.plugin.factionManager.leaveFaction(faction, player);
+
+        }
+
+        // Kicker is leader, no checking
+        if (Main.plugin.getLeader(faction).equalsIgnoreCase(sender.getName()))
+        {
+
+            Main.plugin.factionManager.leaveFaction(faction, player);
+
+        }
+
+        // Coleader kicks member
+        if (Main.plugin.getColeaders(faction).contains(sender.getName()) && Main.plugin.getMembers(faction).contains(player))
+        {
+
+            Main.plugin.factionManager.leaveFaction(faction, player);
+
+        }
+
+        return true;
+            
     }
 
 }
