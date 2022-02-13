@@ -44,6 +44,9 @@ public class Main extends JavaPlugin
         // Creates commands
         factionCommand = new FactionCommand();
 
+        // Creates manager
+        factionManager = new FactionManager();
+
         // Creates event listener
         listener = new EventListener();
         

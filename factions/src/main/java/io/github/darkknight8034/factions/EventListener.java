@@ -23,11 +23,12 @@ import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarFlag;
 import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
+import org.bukkit.boss.KeyedBossBar;
 import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 // Java
@@ -255,8 +256,28 @@ public class EventListener implements Listener
 
             }
 
+            Iterator<KeyedBossBar> bars = Main.plugin.getServer().getBossBars();
+            // Checks all bars
+            while (bars.hasNext())
+            {
+
+                // Gets bar
+                KeyedBossBar b = bars.next();
+
+                // Bar is location bar and contains event player
+                if (b.getKey().getNamespace().equalsIgnoreCase("factions") && b.getKey().getKey().equalsIgnoreCase("location_bar") && b.getPlayers().contains(event.getPlayer()))
+                {
+
+                    // Removes bar from player
+                    b.removePlayer(event.getPlayer());
+
+                } 
+
+
+            }
+
             // Creates boss bar
-            BossBar bar = Main.plugin.getServer().createBossBar(faction, color, BarStyle.SOLID);
+            KeyedBossBar bar = Main.plugin.getServer().createBossBar(new NamespacedKey(Main.plugin, "location_bar"), faction, color, BarStyle.SOLID);
             bar.addPlayer(event.getPlayer());
             bar.setVisible(true);
         
