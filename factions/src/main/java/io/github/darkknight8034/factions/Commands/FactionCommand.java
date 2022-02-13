@@ -203,7 +203,7 @@ public class FactionCommand implements CommandExecutor
         else
         {
 
-            player.sendMessage("You need 30 levels to create a faction!");
+            player.sendMessage("You need " + (Main.plugin.configFile.getInt("factions.createCost") - player.getLevel()) + " more levels to create a faction!");
             return false;
 
         }
