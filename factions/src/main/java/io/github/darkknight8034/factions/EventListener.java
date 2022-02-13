@@ -107,7 +107,7 @@ public class EventListener implements Listener
 
         }
 
-        Set<String> factions = Main.plugin.fm.factions();
+        Set<String> factions = Main.plugin.factionManager.factions();
         factions.remove(faction);
 
         List<String> enemies = (List<String>) Main.plugin.dataFile.getList("factions." + faction + ".enemies");

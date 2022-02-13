@@ -14,6 +14,7 @@ import java.io.IOException;
 
 // Files
 import io.github.darkknight8034.factions.EventListener;
+import io.github.darkknight8034.factions.FactionManager;
 import io.github.darkknight8034.factions.Commands.FactionCommand;
 
 public class Main extends JavaPlugin
@@ -22,10 +23,13 @@ public class Main extends JavaPlugin
     public static Main plugin;
 
     // Commands
-    public FactionCommand fm;
+    public FactionCommand factionCommand;
 
     // Event listener
     public EventListener listener;
+
+    // Managers
+    public FactionManager factionManager;
 
     // Base data file for plugin, factions and members, territories, etc.
     public FileConfiguration dataFile;
@@ -38,7 +42,7 @@ public class Main extends JavaPlugin
         loadConfig();
 
         // Creates commands
-        fm = new FactionCommand();
+        factionCommand = new FactionCommand();
 
         // Creates event listener
         listener = new EventListener();
@@ -68,7 +72,7 @@ public class Main extends JavaPlugin
     public void onDisable()
     {
 
-        saveConfig();
+        saveDefaultConfig();
         getLogger().info("Factions plugin disabled!");
 
     }
@@ -85,7 +89,6 @@ public class Main extends JavaPlugin
 
         }
 
-        saveConfig();
         this.configFile = getConfig();
 
     }

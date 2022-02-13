@@ -8,21 +8,12 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import io.github.darkknight8034.factions.Main;
 
 public class FactionTabComp implements TabCompleter
 {
-
-    private FactionCommand fc;
-
-    public FactionTabComp(FactionCommand fc)
-    {
-
-        this.fc = fc;
-
-    }
-    
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args)
     {
@@ -38,6 +29,7 @@ public class FactionTabComp implements TabCompleter
             vals.add("demote");
             vals.add("claim");
             vals.add("war");
+            vals.add("invite");
 
             return vals;
 
@@ -83,7 +75,7 @@ public class FactionTabComp implements TabCompleter
             {
 
                 // All factions minus the one player is currently in
-                Set<String> factions = fc.factions();
+                Set<String> factions = Main.plugin.factionManager.factions();
 
                 if (factions.size() > 0)
                 {
@@ -96,6 +88,21 @@ public class FactionTabComp implements TabCompleter
 
                 return new ArrayList<String>();
             
+
+            }
+            else if (args[0].equalsIgnoreCase("invite"))
+            {
+
+                // Gets online players
+                List<String> players = new ArrayList<String>();
+                for (Player p : Main.plugin.getServer().getOnlinePlayers())
+                {
+
+                    players.add(p.getName());
+
+                }
+
+                return players;
 
             }
 

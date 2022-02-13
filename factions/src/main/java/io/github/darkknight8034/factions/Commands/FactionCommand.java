@@ -24,6 +24,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import io.github.darkknight8034.factions.Main;
 import io.github.darkknight8034.factions.Commands.FactionTabComp;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 
 // Handles faction commands
 public class FactionCommand implements CommandExecutor
@@ -34,7 +38,7 @@ public class FactionCommand implements CommandExecutor
 
         // Sets up command execution and tab completion
         Main.plugin.getCommand("faction").setExecutor(this);
-        Main.plugin.getCommand("faction").setTabCompleter(new FactionTabComp(this));
+        Main.plugin.getCommand("faction").setTabCompleter(new FactionTabComp());
 
         // Command aliases
         List<String> aliases = new ArrayList<String>();
@@ -87,31 +91,22 @@ public class FactionCommand implements CommandExecutor
                 return war(sender, cmd, label, args);
 
             }
+            else if (args[0].equalsIgnoreCase("join"))
+            {
+
+                return join(sender, cmd, label, args);
+
+            }
+            else if (args[0].equalsIgnoreCase("invite"))
+            {
+
+                return invite(sender, cmd, label, args);
+
+            }
 
         }
 
         return true;
-
-    }
-
-    // Gets list of faction names
-    public Set<String> factions()
-    {
-
-        // Creates config section
-        ConfigurationSection root = Main.plugin.dataFile.getConfigurationSection("factions");
-
-        // Error handling
-        if (root != null) 
-        {
-
-            // Gets keys (aka factions)
-            return root.getKeys(false);
-
-        }
-
-        Main.plugin.getLogger().info("No root to get factions");
-        return new HashSet<String>();
 
     }
 
@@ -122,7 +117,7 @@ public class FactionCommand implements CommandExecutor
         Player player = (Player) sender;
 
         // Gets keys in section, aka. the faction names
-        Set<String> factions = factions();
+        Set<String> factions = Main.plugin.factionManager.factions();
         if (factions.size() != 0)
         {
 
@@ -180,7 +175,7 @@ public class FactionCommand implements CommandExecutor
                 String name = args[1];
 
                 // No duplicate faction names
-                if (factions().contains(name))
+                if (Main.plugin.factionManager.factions().contains(name))
                 {
 
                     player.sendMessage(ChatColor.RED + "A faction with that name already exists!");
@@ -191,89 +186,7 @@ public class FactionCommand implements CommandExecutor
                 // Removes levels from player
                 player.setLevel(player.getLevel() - Main.plugin.configFile.getInt("factions.createCost"));
 
-                // Default values
-                List<String> all = new ArrayList<String>();
-                all.add(player.getName());
-
-                List<String> members = new ArrayList<String>();
-
-                List<String> coleaders = new ArrayList<String>();
-
-                List<Chunk> territory = new ArrayList<Chunk>();
-
-                List<String> enemies = new ArrayList<String>();
-
-                // Setting values in persistent data
-                File f = new File(Main.plugin.getDataFolder() + File.separator + "data.yml");
-                Main.plugin.dataFile = YamlConfiguration.loadConfiguration(f);
-
-                Main.plugin.dataFile.set("factions." + name + ".all", all);
-                Main.plugin.dataFile.set("factions." + name + ".members", members);
-                Main.plugin.dataFile.set("factions." + name + ".coleaders", coleaders);
-                Main.plugin.dataFile.set("factions." + name + ".leader", player.getName());
-                Main.plugin.dataFile.set("factions." + name + ".territory", territory);
-                Main.plugin.dataFile.set("factions." + name + ".enemies", enemies);
-
-                // In game feedback
-                player.sendMessage(ChatColor.GREEN + "You have created the faction: " + name + "!");
-
-                // Removes player from any previous factions
-                String previous = Main.plugin.dataFile.getString("players." + player.getName());
-                if (previous != null)
-                {
-
-                    // Removes player from member list
-                    List<?> Members = Main.plugin.dataFile.getList("factions." + previous + ".members");
-                    Members.remove(player.getName());
-
-                    Main.plugin.dataFile.set("factions." + previous + ".members", Members);
-
-                    // Determines new faction leader if they owned the previous faction
-                    if (Main.plugin.dataFile.getString("factions." + previous + ".leader").equalsIgnoreCase(player.getName()))
-                    {
-
-                        // Sets first coleader to leader
-                        List<?> Coleaders = Main.plugin.dataFile.getList("factions." + previous + ".coleaders");
-                        if (Coleaders.size() >= 1)
-                        {
-
-                            // Sets leader and removes leader from list of coleaders
-                            Main.plugin.dataFile.set("factions." + previous + ".leader", Coleaders.get(0));
-
-                            Coleaders.remove(Coleaders.get(0));
-                            Main.plugin.dataFile.set("factions." + previous + ".coleaders", Coleaders);
-
-                        }
-                        else if (Members.size() >= 1)
-                        {
-
-                            // Sets leader and removes leader from list of members
-                            Main.plugin.dataFile.set("factions." + previous + ".leader", Members.get(0));
-
-                            Members.remove(Members.get(0));
-                            Main.plugin.dataFile.set("factions." + previous + ".members", Members);
-
-                        }
-                        else 
-                        {
-
-                            // Disbands faction if there is no one left
-                            Main.plugin.dataFile.set("factions." + previous, null);
-
-                            player.sendMessage(ChatColor.RED + "You disbanded the faction: " + previous);
-
-                        }
-
-                    }
-
-                }
-
-                // Updates players current faction
-                Main.plugin.dataFile.set("players." + player.getName(), name);
-
-                // Saves file
-                try { Main.plugin.dataFile.save(f); }
-                catch (IOException e) {}
+                
 
                 return true;
 
@@ -594,7 +507,7 @@ public class FactionCommand implements CommandExecutor
 
         }
         String target = args[1];
-        if (!factions().contains(target))
+        if (!Main.plugin.factionManager.factions().contains(target))
         {
 
             sender.sendMessage(ChatColor.RED + "Target faction is invalid!");
@@ -661,4 +574,61 @@ public class FactionCommand implements CommandExecutor
         return true;
 
     }
+
+    private boolean invite(CommandSender sender, Command cmd, String label, String[] args)
+    {
+
+        // Gets faction
+        String faction = Main.plugin.dataFile.getString("players." + sender.getName());
+        if (args.length == 1)
+        {
+
+            sender.sendMessage("You need to give a player name!");
+            return false;
+
+        }
+
+        Player player = Main.plugin.getServer().getPlayer(args[1]);
+
+        // Can't invite player if they aren't in faction
+        if (faction != null)
+        {
+
+            TextComponent msg = new TextComponent(sender.getName() + " has invited you to their faction, " + faction +  ".");
+            msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("Accept invite")));
+            msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/faction join " + faction));
+            player.spigot().sendMessage(msg);
+
+        }
+
+        return true;
+
+    }
+
+    private boolean join(CommandSender sender, Command cmd, String label, String[] args)
+    {
+
+        // Error handling
+        if (args.length == 1)
+        {
+
+            sender.sendMessage("You need to include a faction");
+            return false;
+        
+        }
+
+        String faction = args[1];
+
+        // Player joins faction if invited
+        if (Main.plugin.dataFile.getList("factions." + faction + ".invited").contains(sender.getName()))
+        {
+
+            Main.plugin.factionManager.joinFaction(faction, sender.getName());
+
+        }
+
+        return true;
+    
+    }
+
 }
