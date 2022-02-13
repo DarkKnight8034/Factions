@@ -596,6 +596,13 @@ public class FactionCommand implements CommandExecutor
         }
 
         Player player = Main.plugin.getServer().getPlayer(args[1]);
+        if (player == null)
+        {
+
+            sender.sendMessage(args[1] + " is offline. Invited them again when they are online.");
+            return false;
+
+        }
 
         // Can't invite player if they aren't in faction
         if (faction != null)
