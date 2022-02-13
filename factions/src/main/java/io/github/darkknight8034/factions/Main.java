@@ -61,10 +61,16 @@ public class Main extends JavaPlugin
         try { dataFile.save(f); }
         catch (IOException e) {}
 
-        // Sets world border
-        WorldBorder border = getServer().getWorlds().get(0).getWorldBorder();
-        border.setCenter(0, 0);
-        border.setSize(configFile.getInt("world.border") * 2);
+        // 0 gives default border size
+        if (configFile.getInt("world.border") != 0)
+        {
+
+            // Sets world border
+            WorldBorder border = getServer().getWorlds().get(0).getWorldBorder();
+            border.setCenter(0, 0);
+            border.setSize(configFile.getInt("world.border") * 2);
+
+        }
 
     }
 

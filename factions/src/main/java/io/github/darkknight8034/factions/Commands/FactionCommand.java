@@ -462,6 +462,12 @@ public class FactionCommand implements CommandExecutor
             catch (IOException e) {}
 
         }
+        else
+        {
+
+            player.sendMessage("You need " + (Main.plugin.configFile.getInt("factions.chunkCost") - player.getLevel()) + " more levels to claim land!");
+
+        }
 
         return true;
 

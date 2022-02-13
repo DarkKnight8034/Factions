@@ -1,7 +1,7 @@
 factions:
   # Levels
-  createCost: 30 
-  chunkCost: 10
+  createCost: 15
+  chunkCost: 5
   # Defaults to unlimited
   maxTerritory: 
   # Players can declare war
