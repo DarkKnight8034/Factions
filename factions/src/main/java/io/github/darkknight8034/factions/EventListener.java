@@ -36,8 +36,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.tools.DocumentationTool.Location;
-
 // Files
 import io.github.darkknight8034.factions.Main;
 
@@ -241,15 +239,8 @@ public class EventListener implements Listener
             String chunk = current.getX() + "," + current.getZ();
             String faction = Main.plugin.factionManager.getFactionFromLocation(event.getPlayer().getLocation());
 
+
             BarColor color = BarColor.RED;
-
-            // Player is in their own faction's territory
-            if (Main.plugin.dataFile.getString("players." + event.getPlayer().getName()).equalsIgnoreCase(faction))
-            {
-
-                color = BarColor.GREEN;
-
-            }
 
             // In wilderness
             if (faction == null)
@@ -257,6 +248,13 @@ public class EventListener implements Listener
 
                 color = BarColor.PURPLE;
                 faction = "Wilderness";
+
+            }
+            // Player is in their own faction's territory
+            else if (Main.plugin.getFaction(event.getPlayer().getName()).equalsIgnoreCase(faction))
+            {
+
+                color = BarColor.GREEN;
 
             }
 

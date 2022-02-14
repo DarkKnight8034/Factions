@@ -207,7 +207,7 @@ public class FactionCommand implements CommandExecutor
                 // Removes levels from player
                 player.setLevel(player.getLevel() - Main.plugin.configFile.getInt("factions.createCost"));
 
-                
+                Main.plugin.factionManager.createFaction(name, player.getName());
 
                 return true;
 
@@ -502,6 +502,10 @@ public class FactionCommand implements CommandExecutor
 
             // Claims territory
             Main.plugin.factionManager.claimChunk(faction, location);
+
+            // Feedback
+            sender.sendMessage("Chunk claimed!");
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 10);
 
             // Removes xp from player
             player.setLevel(player.getLevel() - Main.plugin.configFile.getInt("factions.chunkCost"));
