@@ -12,11 +12,18 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Iterator;
 
 // bukkit
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+
+// Boss bar
+import org.bukkit.boss.KeyedBossBar;
+import org.bukkit.boss.BarColor;
+import org.bukkit.NamespacedKey;
+import org.bukkit.boss.BarStyle;
 
 import io.github.darkknight8034.factions.Main;
 
@@ -185,7 +192,7 @@ public class FactionManager {
 
     }
 
-    public void claimChunk(String faction, Location location)
+    public void claimChunk(String faction, Location location, Player player)
     {
 
         // Gets variables
@@ -215,6 +222,8 @@ public class FactionManager {
         try { Main.plugin.dataFile.save(f); }
         catch (IOException e) {}
 
+        // Updates players boss bar
+        setBar(faction, player);
 
     }
 
@@ -285,4 +294,52 @@ public class FactionManager {
 
     }
     
+    // Creates boss bar for faction
+    public void setBar(String faction, Player player)
+    {
+
+        BarColor color = BarColor.RED;
+
+        // In wilderness
+        if (faction == null)
+        {
+
+            color = BarColor.PURPLE;
+            faction = "Wilderness";
+
+        }
+        // Player is in their own faction's territory
+        else if (Main.plugin.getFaction(player.getName()).equalsIgnoreCase(faction))
+        {
+
+            color = BarColor.GREEN;
+
+        }
+
+        Iterator<KeyedBossBar> bars = Main.plugin.getServer().getBossBars();
+        // Checks all bars
+        while (bars.hasNext())
+        {
+
+            // Gets bar
+            KeyedBossBar b = bars.next();
+
+            // Bar is location bar and contains event player
+            if (b.getKey().getNamespace().equalsIgnoreCase("factions") && b.getKey().getKey().equalsIgnoreCase("location_bar") && b.getPlayers().contains(player))
+            {
+
+                // Removes boss bar
+                b.removeAll();
+
+            } 
+
+
+        }
+
+        // Creates boss bar
+        KeyedBossBar bar = Main.plugin.getServer().createBossBar(new NamespacedKey(Main.plugin, "location_bar"), faction, color, BarStyle.SOLID);
+        bar.addPlayer(player);
+        bar.setVisible(true);
+
+    }   
 }

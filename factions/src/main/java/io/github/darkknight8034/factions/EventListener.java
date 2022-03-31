@@ -239,50 +239,8 @@ public class EventListener implements Listener
             String chunk = current.getX() + "," + current.getZ();
             String faction = Main.plugin.factionManager.getFactionFromLocation(event.getPlayer().getLocation());
 
+            Main.plugin.factionManager.setBar(faction, event.getPlayer());
 
-            BarColor color = BarColor.RED;
-
-            // In wilderness
-            if (faction == null)
-            {
-
-                color = BarColor.PURPLE;
-                faction = "Wilderness";
-
-            }
-            // Player is in their own faction's territory
-            else if (Main.plugin.getFaction(event.getPlayer().getName()).equalsIgnoreCase(faction))
-            {
-
-                color = BarColor.GREEN;
-
-            }
-
-            Iterator<KeyedBossBar> bars = Main.plugin.getServer().getBossBars();
-            // Checks all bars
-            while (bars.hasNext())
-            {
-
-                // Gets bar
-                KeyedBossBar b = bars.next();
-
-                // Bar is location bar and contains event player
-                if (b.getKey().getNamespace().equalsIgnoreCase("factions") && b.getKey().getKey().equalsIgnoreCase("location_bar") && b.getPlayers().contains(event.getPlayer()))
-                {
-
-                    // Removes bar from player
-                    b.removePlayer(event.getPlayer());
-
-                } 
-
-
-            }
-
-            // Creates boss bar
-            KeyedBossBar bar = Main.plugin.getServer().createBossBar(new NamespacedKey(Main.plugin, "location_bar"), faction, color, BarStyle.SOLID);
-            bar.addPlayer(event.getPlayer());
-            bar.setVisible(true);
-        
             // Updates player location in map
             location.put(event.getPlayer().getName(), current);
 

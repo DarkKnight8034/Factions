@@ -501,7 +501,7 @@ public class FactionCommand implements CommandExecutor
             }
 
             // Claims territory
-            Main.plugin.factionManager.claimChunk(faction, location);
+            Main.plugin.factionManager.claimChunk(faction, location, player);
 
             // Feedback
             sender.sendMessage("Chunk claimed!");
